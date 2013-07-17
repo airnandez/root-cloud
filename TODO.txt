@@ -1,0 +1,15 @@
+TODO
+----
+
+*  Add support for multi-range HTTP requests and multi-part HTTP responses and
+   overwrite TFile::ReadBuffers method for THttpFile and sub-classes.
+
+*  Add support for Rackspace identity v2 API which allows for runtime discovery
+   of the storage endpoints a user may have data in.
+
+*  Improve handling of HTTP redirect responses. For instance, Google Storage
+   in some cases responds with redirects (status 302) which are currently
+   not followed.
+
+*  Validate server certificate. A clean solution to this problem is depends
+   on the operating system ROOT is running on.

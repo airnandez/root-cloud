@@ -1,0 +1,7 @@
+.DS_Store
+AllDict.*
+*.o
+*.so
+*.root
+settings.sh
+utils/
