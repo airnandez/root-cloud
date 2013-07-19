@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------//
-// File:  scanCloudFile.cxx
+// File:  scanTree.cxx
 // Date:  June 2013
 // Description: ROOT macro to automating testing the ROOT extensions to read
 //              files using cloud protocols such as S3 and Swift API.
