@@ -42,14 +42,23 @@ TSwiftFile::TSwiftFile(const char* url, Option_t* options, const char* ftitle, I
 {
    // Construct a TSwiftFile object. The url argument is of the form:
    //
-   //     swift://host.example.com/bucket/path/to/my/file
+   //       swift://host.example.com/bucket/path/to/my/file
+   //      swhttp://host.example.com/bucket/path/to/my/file
+   //     swhttps://host.example.com/bucket/path/to/my/file
    //
    // The recommended way to create an instance of this class is through
    // TFile::Open, for instance:
    //
    // TFile* f = TFile::Open("swift://host.example.com/bucket/path/to/my/file")
    //
-   // The protocol used for retrieving the file contents is HTTPS.
+   // The protocol used for retrieving the file contents depends on the scheme
+   // used for the file:
+   //
+   //       Scheme               Protocol
+   //       ------               --------
+   //       swift                  https
+   //       swhttps                https
+   //       swhttp                 http
    //
    // The 'options' argument can contain 'NOPROXY' if you want to bypass
    // the HTTP proxy when retrieving this file's contents. As for any THttpFile-derived
@@ -101,24 +110,29 @@ Bool_t TSwiftFile::Initialize(const TUrl& url, Option_t* options)
 
    // Make sure the URL of this Swift file is conformant to what we expect.
    // An accepted Swift path is of the form:
-   //         swift://host[:port]/bucket/path/to/my/file
+   //           swift://host[:port]/bucket/path/to/my/file
+   //          swhttp://host[:port]/bucket/path/to/my/file
+   //         swhttps://host[:port]/bucket/path/to/my/file
 
    TUrl tempUrl(url); // In ROOT v5.24 GetUrl() is not const, so we need a temp URL
    const char* path = tempUrl.GetUrl();
-   TPMERegexp rex("^swift://([^/]+)/([^/]+)/([^/].*)", "i");
-   if (rex.Match(TString(path)) != 4) {
+   TPMERegexp rex("^(swift|swhttps?){1}://([^/]+)/([^/]+)/([^/].*)", "i");
+   if (rex.Match(TString(path)) != 5) {
       Error("Initialize", "'%s' is not a valid Swift file identifier", path);
       return kFALSE;
    }
 
    // Save the bucket and object key. Note that we store the object key
    // starting with "/".
-   fBucket = rex[2];
-   fObjectKey = TString::Format("/%s", (const char*)rex[3]);
+   fBucket = rex[3];
+   fObjectKey = TString::Format("/%s", (const char*)rex[4]);
 
-   // Build URL of this object: Swift requires the protocol to be HTTPS
-   TUrl fullUrl(TString::Format("https://%s/%s%s",
-      (const char*)rex[1],   // host[:port]
+   // Build URL of this object
+   TString protocol = (rex[1].EndsWith("http", TString::kIgnoreCase)) ? "http"
+                                                                      : "https";
+   TUrl fullUrl(TString::Format("%s://%s/%s%s",
+      protocol.Data(),
+      (const char*)rex[2],   // host[:port]
       fBucket.Data(),        // bucket
       fObjectKey.Data())     // object key
    );

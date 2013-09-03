@@ -70,6 +70,10 @@ void P160_CloudStorage()
       // OpenStack Swift
       gPluginMgr->AddHandler("TFile", "^swift:", "TSwiftFile", "RootCloudStorage",
          "TSwiftFile(const char*,Option_t*,const char*,Int_t)");
+      gPluginMgr->AddHandler("TFile", "^swhttps:", "TSwiftFile", "RootCloudStorage",
+         "TSwiftFile(const char*,Option_t*,const char*,Int_t)");
+      gPluginMgr->AddHandler("TFile", "^swhttp:", "TSwiftFile", "RootCloudStorage",
+         "TSwiftFile(const char*,Option_t*,const char*,Int_t)");
    }
    else if (gROOT->GetVersionInt() < 53403) {
       // From ROOT v5.32.00 up to v5.34.03 only 'as3' and 'gs' were known types.
@@ -103,6 +107,10 @@ void P160_CloudStorage()
 
       // OpenStack Swift
       gPluginMgr->AddHandler("TFile", "^swift:", "TSwiftFile", "RootCloudStorage",
+         "TSwiftFile(const char*,Option_t*,const char*,Int_t)");
+      gPluginMgr->AddHandler("TFile", "^swhttps:", "TSwiftFile", "RootCloudStorage",
+         "TSwiftFile(const char*,Option_t*,const char*,Int_t)");
+      gPluginMgr->AddHandler("TFile", "^swhttp:", "TSwiftFile", "RootCloudStorage",
          "TSwiftFile(const char*,Option_t*,const char*,Int_t)");
    }
    else {
@@ -140,6 +148,10 @@ void P160_CloudStorage()
 
       // OpenStack Swift
       gPluginMgr->AddHandler("TFile", "^swift:", "TSwiftFile", "RootCloudStorage",
+         "TSwiftFile(const char*,Option_t*,const char*,Int_t)");
+      gPluginMgr->AddHandler("TFile", "^swhttps:", "TSwiftFile", "RootCloudStorage",
+         "TSwiftFile(const char*,Option_t*,const char*,Int_t)");
+      gPluginMgr->AddHandler("TFile", "^swhttp:", "TSwiftFile", "RootCloudStorage",
          "TSwiftFile(const char*,Option_t*,const char*,Int_t)");
    }
 }

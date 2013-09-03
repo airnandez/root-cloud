@@ -152,6 +152,9 @@ Bool_t THttpRequest::Submit()
    }
 
    fSubmitted = (ret == NE_OK);
+   if (!fSubmitted && (TCloudExtension::fgDebugLevel > 0)) {
+      Info("Submit", "error submitting request [%s]", GetError());
+   }
    return fSubmitted;
 }
 
