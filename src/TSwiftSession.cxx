@@ -27,6 +27,7 @@
 #include "TError.h"
 #include "TSystem.h"
 #include "TSwiftSession.h"
+#include "TCloudExtension.h"
 
 
 ClassImp(TSwiftSession)
@@ -144,7 +145,7 @@ Bool_t TSwiftSession::Authenticate()
       return kFALSE;
    }
 
-   if (gDebug > 0) {
+   if (TCloudExtension::fgDebugLevel > 0) {
       Info("Authenticate", "storage URL: '%s'", storageUrl.Data());
       Info("Authenticate", "storage token: '%s'", storageToken.Data());
    }

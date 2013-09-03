@@ -40,6 +40,7 @@
 #include <openssl/bio.h>
 #include <openssl/buffer.h>
 #endif
+#include "TCloudExtension.h"
 
 
 ClassImp(TS3Request)
@@ -173,7 +174,7 @@ TString TS3Request::ComputeSignature(const TString& secretKey) const
 
    toSign += fPath;
 
-   if (gDebug > 2)
+   if (TCloudExtension::fgDebugLevel > 2)
       Info("ComputeSignature", "toSign=\n'%s'", toSign.Data());
 
    unsigned char digest[SHA_DIGEST_LENGTH] = {0};

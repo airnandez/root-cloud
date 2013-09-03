@@ -11,4 +11,5 @@
 #pragma link C++ class TS3FilePlugin+;
 #pragma link C++ class TSwiftSession+;
 #pragma link C++ class TSwiftFile+;
+#pragma link C++ class TCloudExtension+;
 #endif
