@@ -28,40 +28,15 @@
 #include "TSystem.h"
 #include "THttpSession.h"
 #include "THttpRequest.h"
+#include "TCloudExtension.h"
 
 // libNeon include files
 #include "ne_request.h"
 
 // Declaration of static members and variables
 static const char *gUserAgent = "ROOT-THttpSession";
-static Bool_t gNeonSupportsSSL = kFALSE;
 
 ClassImp(THttpSession)
-
-
-//_____________________________________________________________________________
-static Bool_t InitLibNeon()
-{
-   // Initialize the libNeon library. It needs to be called only once.
-
-   // If already called, return immediately
-   static Bool_t neonInitialized = kFALSE;
-   if (neonInitialized)
-      return kTRUE;
-
-   // Actually initialize libNeon
-   if (ne_sock_init() != 0) {
-      ::Error("InitLibNeon", "could not initialize libNeon library");
-      return kFALSE;
-   }
-
-   // Was libNeon compiled with support for SSL?
-   gNeonSupportsSSL = ne_has_support(NE_FEATURE_SSL) ? kTRUE : kFALSE;
-
-   // Done
-   neonInitialized = kTRUE;
-   return kTRUE;
-}
 
 
 //_____________________________________________________________________________
@@ -69,7 +44,7 @@ static int VerifyServerCertCallback(void*, int failures, const ne_ssl_certificat
 {
    // Callback to verify the server certificate in case of an HTTP session.
 
-   if (gDebug > 1)
+   if (TCloudExtension::fgDebugLevel > 1)
       Info("VerifyServerCertCallback", "Verifying certificate for server '%s'",
          ne_ssl_cert_identity(cert));
 
@@ -93,16 +68,18 @@ static int VerifyServerCertCallback(void*, int failures, const ne_ssl_certificat
 }
 
 
+extern Bool_t InitLibNeon();
 
 //_____________________________________________________________________________
 THttpSession::THttpSession()
    : fRawSession(0)
 {
-   // Create a HTTP session. The supported protocols are HTTP or HTTPS. If
-   // the scheme of the provided URL is not one of those, we force it to be
-   // HTTP.
+   // Create a HTTP session. Initialize the underlying HTTP handling library.
 
-   InitLibNeon();
+   if (!InitLibNeon()) {
+      Error("THttpSession", "could not initialize libNeon");
+      return;
+   }
 }
 
 
@@ -110,13 +87,15 @@ THttpSession::THttpSession()
 THttpSession::THttpSession(const TUrl& url)
    : fRawSession(0)
 {
-   // Create a HTTP session. The supported protocols are HTTP or HTTPS. If
-   // the scheme of the provided URL is not one of those, we force it to be
-   // HTTP.
+   // Create a HTTP session. Initialize the underlying HTTP handling library.
 
-   if (!InitLibNeon())
+   if (!InitLibNeon()) {
+      Error("THttpSession", "could not initialize libNeon");
       return;
+   }
 
+   // Initialize the URL of the server with which we will create an HTTP(S)
+   // session
    SetServerUrl(url);
 }
 
@@ -168,7 +147,7 @@ void THttpSession::SetServerUrl(const TUrl& url)
    }
    const char* hostName = fServerUrl.GetHost();
    unsigned int port = fServerUrl.GetPort();
-   if (gDebug > 0)
+   if (TCloudExtension::fgDebugLevel > 0)
       Info("THttpSession", "creating HTTP session for %s://%s:%d", scheme,
          hostName, port);
 
@@ -183,7 +162,6 @@ void THttpSession::SetServerUrl(const TUrl& url)
    // Set the callback for verifying the server certificate
    if (strcmp(scheme, "https") == 0)
       ne_ssl_set_verify(fRawSession, VerifyServerCertCallback, 0);
-
 }
 
 
@@ -191,7 +169,7 @@ void THttpSession::SetServerUrl(const TUrl& url)
 Bool_t THttpSession::SetProxyUrl(const TUrl& proxyUrl)
 {
    // Set the proxy to be used by this session. The proxy must use the HTTP
-   // protocol, so its scheme must be "http.
+   // protocol, so its scheme must be 'http'.
 
    if (!proxyUrl.IsValid())
       return kFALSE;
@@ -204,7 +182,7 @@ Bool_t THttpSession::SetProxyUrl(const TUrl& proxyUrl)
 
    fProxyUrl = proxyUrl;
    ne_session_proxy(fRawSession, fProxyUrl.GetHost(), fProxyUrl.GetPort());
-   if (gDebug > 0)
+   if (TCloudExtension::fgDebugLevel > 0)
       Info("SetProxyUrl", "setting proxy for this session to %s", fProxyUrl.GetUrl());
    return kTRUE;
 }
@@ -251,7 +229,7 @@ TString THttpSession::GetServerHostAndPort() const
    // with, using the format host:port
 
    if (!fServerUrl.IsValid())
-      return ":";
+      return "<none>:<0000>";
 
    return TString::Format("%s:%d", fServerUrl.GetHost(), fServerUrl.GetPort());
 }
@@ -330,7 +308,7 @@ Bool_t THttpSession::CanUseHttps() const
    // Can this session use HTTPS? The return value depends on whether libNeon
    // was compiled with support for SSL.
 
-   return gNeonSupportsSSL;
+   return ne_has_support(NE_FEATURE_SSL) ? kTRUE : kFALSE;
 }
 
 

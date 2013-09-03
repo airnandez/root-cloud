@@ -56,7 +56,9 @@ CLOUDSTOR_INC   =  THttpFile.h \
                    TS3Request.h \
                    TS3File.h \
                    TSwiftSession.h \
-                   TSwiftFile.h
+                   TSwiftFile.h \
+                   TCloudExtension.h
+
 CLOUDSTOR_SRC   =  THttpFile.$(SrcSuf) \
                    THttpSession.$(SrcSuf) \
                    THttpRequest.$(SrcSuf) \
@@ -67,7 +69,10 @@ CLOUDSTOR_SRC   =  THttpFile.$(SrcSuf) \
                    TS3File.$(SrcSuf) \
                    TSwiftSession.$(SrcSuf) \
                    TSwiftFile.$(SrcSuf) \
+                   TCloudExtension.$(SrcSuf) \
+                   Init.$(SrcSuf) \
                    AllDict.$(SrcSuf)
+
 CLOUDSTOR_OBJ   =  THttpFile.$(ObjSuf) \
                    THttpSession.$(ObjSuf) \
                    THttpRequest.$(ObjSuf) \
@@ -78,7 +83,10 @@ CLOUDSTOR_OBJ   =  THttpFile.$(ObjSuf) \
                    TS3File.$(ObjSuf) \
                    TSwiftSession.$(ObjSuf) \
                    TSwiftFile.$(ObjSuf) \
+                   TCloudExtension.$(ObjSuf) \
+                   Init.$(ObjSuf) \
                    AllDict.$(ObjSuf)
+
 CLOUDSTOR_SHOBJ = libRootCloudStorage.$(DllSuf)
 
 ifeq ($(PLATFORM),win32)
@@ -90,6 +98,14 @@ endif
 
 OBJS          = $(CLOUDSTOR_OBJ)
 SHOBS         = $(CLOUDSTOR_SHOBJ)
+
+# Directory under which to deploy this extension for a private installation.
+# Useful when using a shared (possibly read-only) installation of ROOT. Note
+# however that when you deploy this extension in a different location than
+# under $ROOTSYS, you need to customize your ROOT configuration file
+# (i.e. $HOME/.rootrc) to let ROOT know where it must search for shared
+#  libraries and for plugins.
+HOME_INSTALL_DIR = $(HOME)/.root
 
 #------------------------------------------------------------------------------
 
@@ -138,10 +154,27 @@ endif
 clean:
 	@rm -f $(OBJS) core *Dict.* *.so *.dll
 
+
 buildall: clean all
+
 
 install: $(CLOUDSTOR_SHOBJ)
 	cp ../plugins/P160_CloudStorage.C $(ROOTSYS)/etc/plugins/TFile
 	cp $(CLOUDSTOR_SHOBJ) $(ROOTSYS)/lib
 
+
+uninstall:
+	rm -f $(ROOTSYS)/etc/plugins/TFile/P160_CloudStorage.C
+	rm -f $(ROOTSYS)/lib/$(CLOUDSTOR_SHOBJ)
+
+
+installhome: $(CLOUDSTOR_SHOBJ) uninstallhome
+	mkdir -p $(HOME_INSTALL_DIR)/lib $(HOME_INSTALL_DIR)/plugins/TFile
+	cp $(CLOUDSTOR_SHOBJ) $(HOME_INSTALL_DIR)/lib
+	cp ../plugins/P160_CloudStorage.C $(HOME_INSTALL_DIR)/plugins/TFile
+
+
+uninstallhome:
+	rm -f $(HOME_INSTALL_DIR)/lib/$(CLOUDSTOR_SHOBJ)
+	rm -f $(HOME_INSTALL_DIR)/plugins/TFile/P160_CloudStorage.C
 

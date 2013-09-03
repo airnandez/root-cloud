@@ -54,6 +54,7 @@
 
 #include "THttpSession.h"
 #include "THttpRequest.h"
+#include "TCloudExtension.h"
 
 
 // Declaration of static members and variables
@@ -103,7 +104,7 @@ Bool_t THttpFile::Initialize(const TUrl& url, Option_t* options)
    // sub-classes when they are ready to initialize the super-class data
    // members.
 
-   if (gDebug > 0)
+   if (TCloudExtension::fgDebugLevel > 0)
       Info("Initialize", "initializing HTTP file %s", TUrl(url).GetUrl());
 
    // Init data members
@@ -172,7 +173,7 @@ Bool_t THttpFile::RetrieveFileSize()
    // Retrieve the remote file size (in bytes). It sends a HTTP HEAD request
    // and inspects the HTTP response headers.
 
-   if (gDebug > 0)
+   if (TCloudExtension::fgDebugLevel > 0)
       Info("RetrieveFileSize", "retrieving size of file at %s", fUrl.GetUrl());
 
    // Build and send an HTTP HEAD request
@@ -210,7 +211,7 @@ Bool_t THttpFile::RetrieveFileSize()
    // Save this file size
    fSize = size;
 
-   if (gDebug > 0)
+   if (TCloudExtension::fgDebugLevel > 0)
       Info("RetrieveFileSize", "file size is %lld", fSize);
 
    // We are done
@@ -225,7 +226,7 @@ Bool_t THttpFile::ReadBuffer(char *buffer, Int_t length)
    // Read length bytes into buffer from the remote file. Returns kTRUE in
    // case of failure, so to be compliant with built-in TWebFile class.
 
-   if (gDebug > 0)
+   if (TCloudExtension::fgDebugLevel > 0)
       Info("ReadBuffer", "THttpFile::ReadBuffer(char *buffer, %d) starting", length);
    if (length <= 0) {
       // Nothing to do
@@ -255,7 +256,7 @@ Bool_t THttpFile::ReadBuffer(char *buffer, Int_t length)
 
    TString rangeValue = TString::Format("bytes=%lld-%lld", fOffset, fOffset+length-1);
    request->SetHeader("Range", rangeValue);
-   if (gDebug > 0)
+   if (TCloudExtension::fgDebugLevel > 0)
       Info("ReadBuffer", "asking for range %s", rangeValue.Data());
 
    // Submit this request
@@ -267,7 +268,7 @@ Bool_t THttpFile::ReadBuffer(char *buffer, Int_t length)
    }
 
    // Analyze the response
-   if (gDebug > 0)
+   if (TCloudExtension::fgDebugLevel > 0)
       request->DumpResponseHeaders();
 
    Bool_t retCode = kTRUE;
@@ -318,7 +319,7 @@ Bool_t THttpFile::ReadBuffer(char *buffer, Long64_t position, Int_t length)
 {
    // Read up to 'length' bytes into 'buffer', from file position 'position'.
 
-   if (gDebug > 0)
+   if (TCloudExtension::fgDebugLevel > 0)
       Info("ReadBuffer", "THttpFile::ReadBuffer(char *buffer, %lld, %d) starting",
          position, length);
 
@@ -330,7 +331,7 @@ Bool_t THttpFile::ReadBuffer(char *buffer, Long64_t position, Int_t length)
 //_____________________________________________________________________________
 Bool_t THttpFile::ReadBuffers(char *buffer, Long64_t *position, Int_t *length, Int_t numBuffers)
 {
-   if (gDebug > 0)
+   if (TCloudExtension::fgDebugLevel > 0)
       Info("ReadBuffers", "THttpFile::ReadBuffers(char *buffer, Long64_t *position, Int_t *length, %d) starting",
          numBuffers);
 
@@ -425,7 +426,7 @@ Bool_t THttpFile::ReceiveResponseBody(THttpRequest* request, char* buffer, Int_t
 {
    // Receives the whole response body and copies it into the provided buffer.
 
-   if (gDebug > 2)
+   if (TCloudExtension::fgDebugLevel > 2)
       Info("ReceiveResponseBody", "copying %d bytes from response body into buffer", length);
 
    // Parse the Content-Length header and make sure that this response's body
@@ -445,7 +446,7 @@ Bool_t THttpFile::ReceiveResponseBody(THttpRequest* request, char* buffer, Int_t
       return kFALSE;
    }
 
-   if (gDebug > 2)
+   if (TCloudExtension::fgDebugLevel > 2)
       Info("ReceiveResponseBody", "copied %d bytes", length);
 
    return kTRUE;
@@ -547,7 +548,7 @@ Bool_t THttpFile::GetAuthFromOptions(Option_t* options, TString& accessKey, TStr
    // the output arguments.
    accessKey = TString(rex[2]);
    secretKey = TString(rex[3]);
-   if (gDebug > 0) {
+   if (TCloudExtension::fgDebugLevel > 0) {
       Info("GetAuthFromOptions", "using authentication information from 'options' argument");
       Info("GetAuthFromOptions", "accessKey='%s'", accessKey.Data());
       Info("GetAuthFromOptions", "secretKey='%s'", secretKey.Data());
@@ -574,7 +575,7 @@ Bool_t THttpFile::GetAuthFromEnv(const char* accessKeyEnv, const char* secretKey
    // Found the auth info in environment. Save it in the output arguments
    outAccessKey = accessKey;
    outSecretKey = secretKey;
-   if (gDebug > 0) {
+   if (TCloudExtension::fgDebugLevel > 0) {
       Info("GetAuthFromEnv", "using authentication information from environmental variables '%s' and '%s'",
             accessKeyEnv, secretKeyEnv);
    }
