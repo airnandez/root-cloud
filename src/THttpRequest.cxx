@@ -30,6 +30,7 @@
 #include "TSystem.h"
 #include "THttpRequest.h"
 #include "THttpSession.h"
+#include "TCloudExtension.h"
 
 // libNeon include files
 #include "ne_session.h"
@@ -131,7 +132,7 @@ Bool_t THttpRequest::Submit()
       ne_add_request_header(fRawRequest, h->GetKey(), h->GetValue());
    }
 
-   if (gDebug > 0) {
+   if (TCloudExtension::fgDebugLevel > 0) {
       Info("Submit", "sending HTTP request to server %s://%s",
          fSession->GetScheme().Data(), fSession->GetServerHostAndPort().Data());
       Info("Submit", "%s %s", fVerb.Data(), GetFullPath().Data());
@@ -151,6 +152,9 @@ Bool_t THttpRequest::Submit()
    }
 
    fSubmitted = (ret == NE_OK);
+   if (!fSubmitted && (TCloudExtension::fgDebugLevel > 0)) {
+      Info("Submit", "error submitting request [%s]", GetError());
+   }
    return fSubmitted;
 }
 

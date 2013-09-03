@@ -150,34 +150,38 @@ TFile* f2 = TFile::Open("gs://storage.googleapis.com/myBucket/myFile.root", "AUT
 
 **WARNING:** *although we present it that way for illustration purposes, it is not recommended practice to store your authentication credentials in your source code. In particular, your secret key must be kept secret. One way of providing your authentication credentials to ROOT is storing them in a protected file and reading them by the ROOT macro at run time for computing the `AUTH=` argument just before you need to open the file.*
 
-Based on the scheme of your file's URL, ROOT will automatically load and use the appropriate code of this extension for interacting with the server where your file is hosted for retrieving your file's contents.
+Based on the scheme of your file's URL, ROOT will automatically load and use the appropriate code of this extension for interacting with the server where your file is hosted for retrieving its contents.
 
 The underlying protocol used to actually transport the file contents (i.e. HTTP or HTTPS) depends on the scheme used in your URL. The table below summarizes the possibilities currently supported:
 
 
-| If you use this scheme…   | With this storage provider…      | This extension will use… | On top of… |
-| ----------------------    | :-------------------------------:| ------------------------ | ------------ |
-| `s3://`                   | Amazon S3                        | S3                       | HTTPS |
-| `s3https://`              | Amazon S3                        | S3                       | HTTPS |
-| `s3http://`               | Amazon S3                        | S3                       | HTTP  |
-| `https://`                | Amazon S3                        |                          | HTTPS |
-| `http://`                 | Amazon S3                        |                          | HTTP  |
-|                           |                                  |                          |       |
-| `gs://`                   | Google Storage                   | S3                       | HTTPS |
-| `gshttps://`              | Google Storage                   | S3                       | HTTPS |
-| `gshttp://`               | Google Storage                   | S3                       | HTTP  |
-| `https://`                | Google Storage                   |                          | HTTPS |
-| `http://`                 | Google Storage                   |                          | HTTP  |
-|                           |                                  |                          |       |
-| `swift://`                | OpenStack Swift                  | Swift native protocol    | HTTPS |
-| `s3://`                   | OpenStack Swift with S3 gateway  | S3                       | HTTPS |
-| `s3https://`              | OpenStack Swift with S3 gateway  | S3                       | HTTPS |
-| `s3http://`               | OpenStack Swift  with S3 gateway | *Not supported*          |       |
-|                           |                                  |       |
-| `swift://`                | Rackspace                        | Swift native protocol    | HTTPS |
-| `s3://`                   | Rackspace                        | *Not supported*          |       |
-| `s3https://`              | Rackspace                        | *Not supported*          |       |
-| `s3http://`               | Rackspace                        | *Not supported*          |       |
+| If you use this scheme…   | with this storage provider…       | this extension will use this protocol… | on top of… |
+| ----------------------    | :-------------------------------: | ------------------------ | ------------ |
+| `s3://`                   | Amazon S3                         | S3                       | HTTPS |
+| `s3https://`              | Amazon S3                         | S3                       | HTTPS |
+| `s3http://`               | Amazon S3                         | S3                       | HTTP  |
+| `https://`                | Amazon S3                         |                          | HTTPS |
+| `http://`                 | Amazon S3                         |                          | HTTP  |
+|                           |                                   |                          |       |
+| `gs://`                   | Google Storage                    | S3                       | HTTPS |
+| `gshttps://`              | Google Storage                    | S3                       | HTTPS |
+| `gshttp://`               | Google Storage                    | S3                       | HTTP  |
+| `https://`                | Google Storage                    |                          | HTTPS |
+| `http://`                 | Google Storage                    |                          | HTTP  |
+|                           |                                   |                          |       |
+| `swift://`                | Rackspace                         | Swift native protocol    | HTTPS |
+| `swhttps://`              | Rackspace                         | *Not supported*          |       |
+| `swhttp://`               | Rackspace                         | *Not supported*          |       |
+| `s3://`                   | Rackspace                         | *Not supported*          |       |
+| `s3https://`              | Rackspace                         | *Not supported*          |       |
+| `s3http://`               | Rackspace                         | *Not supported*          |       |
+|                           |                                   |                          |       |
+| `swift://`                | OpenStack Swift                   | Swift native protocol    | HTTPS |
+| `swhttps://`              | OpenStack Swift                   | Swift native protocol    | HTTPS |
+| `swhttp://`               | OpenStack Swift                   | Swift native protocol    | HTTP  |
+| `s3://`                   | OpenStack Swift *[with S3 gateway]* | S3                       | HTTPS |
+| `s3https://`              | OpenStack Swift *[with S3 gateway]* | S3                       | HTTPS |
+| `s3http://`               | OpenStack Swift *[with S3 gateway]* | S3                       | HTTP  |
 
 
 
