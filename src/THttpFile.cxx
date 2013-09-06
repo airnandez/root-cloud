@@ -90,10 +90,41 @@ THttpFile::THttpFile(const char* url, Option_t* options, const char* ftitle, Int
 //_____________________________________________________________________________
 THttpFile::~THttpFile()
 {
+   if (TCloudExtension::fgDebugLevel > 0)
+      Info("~THttpFile", "destroying file '%s'", fUrl.GetUrl());
+
+   Close();
+}
+
+
+//_____________________________________________________________________________
+void THttpFile::TerminateSession()
+{
+   // Terminate the underlying HTTP session being used by this file
+
+   if (TCloudExtension::fgDebugLevel > 0)
+      Info("TerminateSession", "terminating HTTP session with host '%s'", fUrl.GetHost());
+
    if (fHttpSession != 0) {
       delete fHttpSession;
       fHttpSession = 0;
    }
+}
+
+
+//_____________________________________________________________________________
+void THttpFile::Close(Option_t* option)
+{
+   // Close this file
+
+   if (TCloudExtension::fgDebugLevel > 0)
+      Info("Close", "closing file '%s'", fUrl.GetUrl());
+
+   // Terminate this HTTP session
+   TerminateSession();
+
+   // Call the superclass' Close()
+   TFile::Close(option);
 }
 
 
@@ -228,6 +259,7 @@ Bool_t THttpFile::ReadBuffer(char *buffer, Int_t length)
 
    if (TCloudExtension::fgDebugLevel > 0)
       Info("ReadBuffer", "THttpFile::ReadBuffer(char *buffer, %d) starting", length);
+
    if (length <= 0) {
       // Nothing to do
       return kFALSE;
@@ -280,8 +312,7 @@ Bool_t THttpFile::ReadBuffer(char *buffer, Int_t length)
          UpdateFileStats(length);
          retCode = kFALSE;  // False means successful ReadBuffer
       }
-   }
-   else {
+   } else {
       Error("ReadBuffer", "failed to retrieve partial content of file [%s]",
          request->GetError());
    }

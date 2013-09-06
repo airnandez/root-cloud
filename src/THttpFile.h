@@ -72,6 +72,7 @@ private:
    TString           BuildRange(int numBlocks, Long64_t* from, Int_t* length);
    Bool_t            ReceiveResponseBody(THttpRequest* request, char* buffer, Int_t length);
    void              SetSessionProxy();
+   void              TerminateSession();
 
 
 protected:
@@ -101,6 +102,7 @@ public:
    virtual Bool_t       ReadBuffers(char *buffer, Long64_t *position, Int_t *length, Int_t numBuffers);
    virtual void         Seek(Long64_t offset, TFile::ERelativeTo pos=kBeg);
    virtual void         SetOffset(Long64_t offset, TFile::ERelativeTo pos = kBeg);
+   virtual void         Close(Option_t* option="");
 
    // Selectors
    virtual Long64_t     GetSize() const;
