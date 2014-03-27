@@ -29,7 +29,7 @@ When compiled and linked, the C++ classes produce a shared object library. This 
 See **How to Use** section below for more details on what file naming schemes are supported by this extension.
 
 #### Supported versions of ROOT
-We have tested this extension with several versions of ROOT since v5.24.00 (released on October 2009) up to the current production version (v5.34.09). ROOT versions previous to v5.24.00 may work but we have not tested.
+We have tested this extension with several versions of ROOT since v5.24.00 (released on October 2009) up to the current production version (v5.34.18). ROOT versions prior to v5.24.00 may work but we have not tested.
 
 #### Supported cloud storage service providers
 The service providers we tested this extension against are:
@@ -43,7 +43,7 @@ The service providers we tested this extension against are:
 #### Supported operating systems
 We have tested this extension with the operating systems below:
 
-* MacOS X v10.7
+* MacOS X v10.7 and v10.8
 * Scientific Linux v5 and v6
 
 It is very likely that it works on other operating systems where ROOT and the dependencies of this package (see below) are supported.
