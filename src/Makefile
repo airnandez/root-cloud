@@ -12,7 +12,14 @@
 ROOT_CONFIG := root-config
 ifeq ($(shell which $(ROOT_CONFIG) 2>&1 | sed -ne "s@.*/$(ROOT_CONFIG)@$(ROOT_CONFIG)@p"),$(ROOT_CONFIG))
 MKARCH := $(wildcard $(shell $(ROOT_CONFIG) --etcdir)/Makefile.arch)
-RCONFIG := $(wildcard $(shell $(ROOT_CONFIG) --incdir)/RConfigure.h)
+# RCONFIG := $(wildcard $(shell $(ROOT_CONFIG) --incdir)/RConfigure.h)
+endif
+ROOT_LIBDIR := $(shell $(ROOT_CONFIG) --libdir)
+ROOT_ETCDIR := $(shell $(ROOT_CONFIG) --etcdir)
+
+# ROOTCINT is not necessarily defined for ROOT >= v6, so assume it is CLING
+ifeq ($(ROOTCINT),)
+ROOTCINT := rootcling
 endif
 
 #
@@ -37,13 +44,15 @@ LDFLAGS += $(shell $(ROOT_CONFIG) --libs)
 # environmental variable NEON_CONFIG. If not, we expect this command to be in
 # the PATH. If you installed libNeon in a different location, use the command
 #
-#    $ NEON_CONFIG=/path/to/my/neon-config make
+#    $ NEON_CONFIG=/path/to/my/neon-config && make
 #
 ifeq ($(NEON_CONFIG),)
 NEON_CONFIG := neon-config
 endif
-CXXFLAGS += $(shell $(NEON_CONFIG) --cflags)
+
+CXXFLAGS     += $(shell $(NEON_CONFIG) --cflags)
 EXPLLINKLIBS += $(shell $(NEON_CONFIG) --libs)
+NEON_INC     := $(shell $(NEON_CONFIG) --prefix)/include/neon
 
 #------------------------------------------------------------------------------
 
@@ -73,19 +82,7 @@ CLOUDSTOR_SRC   =  THttpFile.$(SrcSuf) \
                    Init.$(SrcSuf) \
                    AllDict.$(SrcSuf)
 
-CLOUDSTOR_OBJ   =  THttpFile.$(ObjSuf) \
-                   THttpSession.$(ObjSuf) \
-                   THttpRequest.$(ObjSuf) \
-                   THttpHeader.$(ObjSuf) \
-                   THttpHeaderSet.$(ObjSuf) \
-                   TS3Session.$(ObjSuf) \
-                   TS3Request.$(ObjSuf) \
-                   TS3File.$(ObjSuf) \
-                   TSwiftSession.$(ObjSuf) \
-                   TSwiftFile.$(ObjSuf) \
-                   TCloudExtension.$(ObjSuf) \
-                   Init.$(ObjSuf) \
-                   AllDict.$(ObjSuf)
+CLOUDSTOR_OBJ = $(CLOUDSTOR_SRC:%.$(SrcSuf)=%.$(ObjSuf))
 
 CLOUDSTOR_SHOBJ = libRootCloudStorage.$(DllSuf)
 
@@ -120,7 +117,7 @@ all:  $(OBJS) $(SHOBS)
 
 AllDict.$(SrcSuf): $(CLOUDSTOR_INC) LinkDef.h
 	@echo "Generating dictionary $@..."
-	$(ROOTCINT) -v4 -f $@ -c $^
+	$(ROOTCINT) -v4 -f $@ -c -I$(NEON_INC) $^
 
 $(CLOUDSTOR_SRC): $(CLOUDSTOR_INC)
 
@@ -152,20 +149,20 @@ endif
 
 
 clean:
-	@rm -f $(OBJS) core *Dict.* *.so *.dll
+	@rm -f $(OBJS) core *Dict.* *.so *.dll AllDict.*
 
 
 buildall: clean all
 
 
 install: $(CLOUDSTOR_SHOBJ)
-	cp ../plugins/P160_CloudStorage.C $(ROOTSYS)/etc/plugins/TFile
-	cp $(CLOUDSTOR_SHOBJ) $(ROOTSYS)/lib
+	cp ../plugins/P160_CloudStorage.C $(ROOT_ETCDIR)/plugins/TFile
+	cp $(CLOUDSTOR_SHOBJ) $(ROOT_LIBDIR)
 
 
 uninstall:
-	rm -f $(ROOTSYS)/etc/plugins/TFile/P160_CloudStorage.C
-	rm -f $(ROOTSYS)/lib/$(CLOUDSTOR_SHOBJ)
+	rm -f $(ROOT_ETCDIR)/TFile/P160_CloudStorage.C
+	rm -f $(ROOT_LIBDIR)/$(CLOUDSTOR_SHOBJ)
 
 
 installhome: $(CLOUDSTOR_SHOBJ) uninstallhome
