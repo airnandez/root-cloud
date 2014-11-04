@@ -117,6 +117,8 @@ protected:
    TString              fVerb;          // HTTP verb
    TString              fPath;          // Path
    TString              fQuery;         // Query
+   const char*          fBody;          // Request body
+   Int_t                fBodyLength;    // Request body length
    Bool_t               fSubmitted;     // Was this request successfully sent to the server?
    THttpHeaderSet       fReqHeaderSet;  // Request's header set
    THttpHeaderSet       fRespHeaderSet; // Response's header set
@@ -152,6 +154,7 @@ public:
    THttpRequest&       SetVerb(const TString& verb);
    THttpRequest&       SetPath(const TString& path);
    THttpRequest&       SetQuery(const TString& query);
+   THttpRequest&       SetBody(const char* body, Int_t length);
    Long_t              GetResponseBody(char* buffer, Long_t length);
 
    ClassDef(THttpRequest, 0)  // HTTP request

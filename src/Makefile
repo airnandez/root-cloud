@@ -51,6 +51,7 @@ NEON_CONFIG := neon-config
 endif
 
 CXXFLAGS     += $(shell $(NEON_CONFIG) --cflags)
+CXXFLAGS     += -I../external/rapidjson/include
 EXPLLINKLIBS += $(shell $(NEON_CONFIG) --libs)
 NEON_INC     := $(shell $(NEON_CONFIG) --prefix)/include/neon
 
@@ -64,6 +65,7 @@ CLOUDSTOR_INC   =  THttpFile.h \
                    TS3Session.h \
                    TS3Request.h \
                    TS3File.h \
+                   TSwiftIdentityClient.h \
                    TSwiftSession.h \
                    TSwiftFile.h \
                    TCloudExtension.h
@@ -76,6 +78,7 @@ CLOUDSTOR_SRC   =  THttpFile.$(SrcSuf) \
                    TS3Session.$(SrcSuf) \
                    TS3Request.$(SrcSuf) \
                    TS3File.$(SrcSuf) \
+                   TSwiftIdentityClient.$(SrcSuf) \
                    TSwiftSession.$(SrcSuf) \
                    TSwiftFile.$(SrcSuf) \
                    TCloudExtension.$(SrcSuf) \

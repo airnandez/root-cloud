@@ -55,7 +55,7 @@ function testFileSet {
       printMessage "Testing with file '"$f"'"
 
       # Call the ROOT macro with this file
-      root -l -b -q -x scanTree.cxx\(\"$f\"\)
+      root -l -b -q -x "scanTree.cxx(\"$f\", 0)"
       rootRetCode=$?
 
       # If there was an error, stop testing
