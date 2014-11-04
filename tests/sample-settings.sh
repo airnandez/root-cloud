@@ -50,21 +50,23 @@ case $targetProvider in
 
    "SWIFT")
          fileSet=(
-            #   "swift://fsc01.ihep.ac.cn:8080/root/tree.root"
-            #      "s3://fsc01.ihep.ac.cn:8080/root/tree.root"
-            # "s3https://fsc01.ihep.ac.cn:8080/root/tree.root"
+            #   "swift://root/tree.root"
          )
-         accessKey="my Swift access key"
-         secretKey="my Swift secret key"
+         authUrl="https://identity.example.com:5000/v2.0/"
+         tenantName="my Swift tenant"
+         userName="my Swift user"
+         password="my Swift password"
          ;;
 
 
    "RACKSPACE")
          fileSet=(
-            # "swift://identity.api.rackspacecloud.com/root/tree.root"
+            # "swift://root/tree.root"
          )
-         accessKey="my Rackspace access key"
-         secretKey="my Rackspace secret key"
+         authUrl="https://identity.api.rackspacecloud.com/v2.0/"
+         tenantName="my Rackspace tenant"
+         userName="my Rackspace user"
+         password="my Rackspace password"
          ;;
 
 

@@ -87,6 +87,11 @@ for p in ${providerSet[*]}; do
    if [ "X$accessKey" != "X" ]; then
       export S3_ACCESS_KEY="$accessKey"
       export S3_SECRET_KEY="$secretKey"
+   else
+      export OS_AUTH_URL="$authUrl"
+      export OS_TENANT_NAME="$tenantName"
+      export OS_USERNAME="$userName"
+      export OS_PASSWORD="$password"
    fi
 
    #
@@ -97,7 +102,7 @@ for p in ${providerSet[*]}; do
    #
    # Unset the credentials
    #
-   unset S3_ACCESS_KEY
-   unset S3_SECRET_KEY
+   unset S3_ACCESS_KEY S3_SECRET_KEY
+   unset OS_AUTH_URL OS_TENANT_NAME OS_USERNAME OS_PASSWORD
 done
 

@@ -46,6 +46,8 @@ THttpRequest::THttpRequest(THttpSession* session, const TString& verb,
 {
    fSession = session;
    fRawRequest = 0;
+   fBody = 0;
+   fBodyLength = 0;
    fSubmitted = kFALSE;
    SetVerb(verb);
    SetPath(path);
@@ -75,6 +77,16 @@ THttpRequest& THttpRequest::SetHeader(const TString& header, const TString& valu
    // Set a header for this request.
 
    fReqHeaderSet.Add(header, value);
+   return *this;
+}
+
+//_____________________________________________________________________________
+THttpRequest& THttpRequest::SetBody(const char* body, Int_t length)
+{
+   // Set the request body
+
+   fBody = body;
+   fBodyLength = (fBody == 0) ? 0 : length;
    return *this;
 }
 
@@ -137,6 +149,11 @@ Bool_t THttpRequest::Submit()
          fSession->GetScheme().Data(), fSession->GetServerHostAndPort().Data());
       Info("Submit", "%s %s", fVerb.Data(), GetFullPath().Data());
       DumpRequestHeaders();
+   }
+
+   // Add request body (if any)
+   if (fBody != 0) {
+      ne_set_request_body_buffer(fRawRequest, fBody, fBodyLength);
    }
 
    // Actually send the request via Neon

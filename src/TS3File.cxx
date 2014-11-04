@@ -36,8 +36,9 @@
 // in order to access each S3 file. They are provided to you by your S3 //
 // service provider. Those two keys can be provided to ROOT when        //
 // initializing an object of this class by two means:                   //
-// a) by using the environmental variables S3_ACCESS_KEY and            //
-//    S3_SECRET_KEY, or                                                 //
+//                                                                      //
+// a) by setting the environmental variables S3_ACCESS_KEY and          //
+//    S3_SECRET_KEY to the appropriate values, or                       //
 // b) by specifying them as an argument when opening each file.         //
 //                                                                      //
 // The first method is convenient if all the S3 files you want to       //
@@ -62,7 +63,7 @@
 #include "TError.h"
 #include "TSystem.h"
 #include "TPRegexp.h"
-#include "TTimeStamp.h"
+#include "TObjString.h"
 #include "THttpSession.h"
 #include "TS3File.h"
 
@@ -74,7 +75,8 @@ ClassImp(TS3File)
 TS3File::TS3File(const char* url, Option_t* options, const char* ftitle, Int_t compress)
           : THttpFile(url, "NOINIT", ftitle, compress)
 {
-   // Construct a TS3File object. The url argument is one of the following forms:
+   // Construct a TS3File object. The url argument is expected to be of one
+   // of the following forms:
    //
    //         s3://host.example.com/bucket/path/to/my/file
    //     s3http://host.example.com/bucket/path/to/my/file
@@ -90,8 +92,8 @@ TS3File::TS3File(const char* url, Option_t* options, const char* ftitle, Int_t c
    // The recommended way to create an instance of this class is through
    // TFile::Open, for instance:
    //
-   // TFile* f1 = TFile::Open("s3://host.example.com/bucket/path/to/my/file")
-   // TFile* f2 = TFile::Open("gs://storage.googleapis.com/bucket/path/to/my/file")
+   //   TFile* f1 = TFile::Open("s3://host.example.com/bucket/path/to/my/file")
+   //   TFile* f2 = TFile::Open("gs://storage.googleapis.com/bucket/path/to/my/file")
    //
    // The specified scheme (i.e. s3, s3http, s3https, ...) determines the underlying
    // transport protocol to use for downloading the file contents, namely HTTP or HTTPS.
@@ -99,36 +101,24 @@ TS3File::TS3File(const char* url, Option_t* options, const char* ftitle, Int_t c
    // protocol. The 's3http', 'as3' and 'gshttp' schemes imply using HTTP as the transport
    // protocol.
    //
-   // The 'options' argument can contain 'NOPROXY' if you want to bypass
+   // Your user credentials are extracted from the environment variables
+   // S3_ACCESS_KEY and S3_SECRET_KEY. If set, those values are used for
+   // opening all files with scheme 's3*:' or 'gs*:'.
+   //
+   // You can also specify the credentials to use on a per-file basis by using
+   // the 'options' argument. For instance:
+   //
+   //    TFile* f=TFile::Open("s3://host.example.com/bucket/path/to/my/file",
+   //                         "S3_ACCESS_KEY=AWSACCESSKEY S3_SECRET_KEY=1234567890WECUBIPO")
+   //
+   // The 'options' argument can also contain 'NOPROXY' if you want to bypass
    // the HTTP proxy when retrieving this file's contents. As for any THttpFile-derived
    // object, the URL of the web proxy can be specified by setting an environmental
    // variable 'http_proxy'. If this variable is set, we ask that proxy to route our
    // requests HTTP(S) requests to the file server.
    //
-   // In addition, you can also use the 'options' argument to provide the access key
-   // and secret key to be used for authentication purposes for this file by using a
-   // string of the form "AUTH=myAccessKey:mySecretKey". This may be useful to
-   // open several files hosted by different providers in the same program/macro,
-   // where the environemntal variables solution is not convenient (see below).
-   //
-   // If you need to specify both NOPROXY and AUTH separate them by ' '
-   // (blank), for instance:
-   // "NOPROXY AUTH=myAccessKey:mySecretKey"
-   //
-   // Examples:
-   //    TFile* f1 = TFile::Open("s3://host.example.com/bucket/path/to/my/file",
-   //                            "NOPROXY AUTH=myAccessKey:mySecretKey");
-   //    TFile* f2 = TFile::Open("s3://host.example.com/bucket/path/to/my/file",
-   //                            "AUTH=myAccessKey:mySecretKey");
-   //
-   // If there is no authentication information in the 'options' argument
-   // (i.e. not AUTH="....") the values of the environmental variables
-   // S3_ACCESS_KEY and S3_SECRET_KEY (if set) are expected to contain
-   // the access key id and the secret access key, respectively. You have
-   // been provided with these credentials by your S3 service provider.
-   //
-   // If neither the AUTH information is provided in the 'options' argument
-   // nor the environmental variables are set, we try to open the file
+   // If the user credentials are neither provided in the 'options' argument
+   // nor via the environment variables, we try to open the file
    // without providing any authentication information to the server. This
    // is useful when the file is set an access control that allows for
    // any unidentified user to read the file.
@@ -187,11 +177,9 @@ Bool_t TS3File::Initialize(const TUrl& url, Option_t* options)
 
    // Retrieve the authentication information from 'options' or from the
    // environmental variables
-   const char* kAccessKeyEnv = "S3_ACCESS_KEY";
-   const char* kSecretKeyEnv = "S3_SECRET_KEY";
-   if (!GetAuthFromOptions(options, fAccessKey, fSecretKey)) {
+   if (!GetCredentialsFromOptions(TString(options), fAccessKey, fSecretKey)) {
       // There is not auth information in the options. Check in the environment.
-      GetAuthFromEnv(kAccessKeyEnv, kSecretKeyEnv, fAccessKey, fSecretKey);
+      GetCredentialsFromEnv(fAccessKey, fSecretKey);
    }
 
    // Determine what flavor of S3 authentication do we need to use with
@@ -221,8 +209,7 @@ Bool_t TS3File::Initialize(const TUrl& url, Option_t* options)
       // accessing them, i.e. those which are not world-readable)
       if (fAccessKey.IsNull() || fSecretKey.IsNull()) {
          Error("TS3File", "could not find authentication info in "\
-            "'options' argument nor in environmental variables '%s' and '%s'",
-            kAccessKeyEnv, kSecretKeyEnv);
+            "'options' argument nor in environmental variables 'S3_ACCESS_KEY' and 'S3_SECRET_KEY'");
       }
       return kFALSE;
    }
@@ -272,6 +259,46 @@ TS3Session* TS3File::MakeSession(const TUrl& fileUrl)
    return new TS3Session(fileUrl, fAuthType, fAccessKey, fSecretKey);
 }
 
+
+//_____________________________________________________________________________
+Bool_t TS3File::GetCredentialsFromEnv(TString& accessKey, TString& secretKey)
+{
+   accessKey = gSystem->Getenv("S3_ACCESS_KEY");
+   secretKey = gSystem->Getenv("S3_SECRET_KEY");
+   return !accessKey.IsNull() && !secretKey.IsNull();
+}
+
+
+//_____________________________________________________________________________
+Bool_t TS3File::GetCredentialsFromOptions(const TString& options,
+   TString& accessKey, TString& secretKey)
+{
+   // Retrieve the credentials from the options specified at open time
+
+   // The options string is expected to be of the forms:
+   //   S3_ACCESS_KEY=AWSACCESSKEY  S3_SECRET_KEY=1234567890WECUBIPO
+   //   S3_ACCESS_KEY="AWSACCESSKEY" S3_SECRET_KEY="1234567890WECUBIPO"
+   TObjArray* a = options.Tokenize(" ");
+   if (a == 0) {
+      return kFALSE;
+   }
+
+   accessKey = secretKey = "";
+   for (int i=0; i < a->GetEntries(); i++) {
+      TObjString* t = (TObjString*)a->UncheckedAt(i);
+      TString token = t->GetString();
+      if (token.BeginsWith("S3_ACCESS_KEY=")) {
+         accessKey = token.Remove(0, ::strlen("S3_ACCESS_KEY="));
+         accessKey.Remove(TString::kBoth, '"');
+      } else if (token.BeginsWith("S3_SECRET_KEY=")) {
+         secretKey = token.Remove(0, ::strlen("S3_SECRET_KEY="));
+         secretKey.Remove(TString::kBoth, '"');
+      }
+   }
+
+   delete a;
+   return !accessKey.IsNull() && !secretKey.IsNull();
+}
 
 
 

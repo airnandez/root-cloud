@@ -30,63 +30,59 @@
 #include "TError.h"
 #include "TSystem.h"
 #include "TPRegexp.h"
-#include "TTimeStamp.h"
+#include "TObjString.h"
 #include "TSwiftFile.h"
+#include "TCloudExtension.h"
 
 
 ClassImp(TSwiftFile)
 
 //_____________________________________________________________________________
 TSwiftFile::TSwiftFile(const char* url, Option_t* options, const char* ftitle, Int_t compress)
-          : THttpFile(url, "NOINIT", ftitle, compress)
+          : THttpFile(url, "NOINIT", ftitle, compress), fIdClient(0)
 {
    // Construct a TSwiftFile object. The url argument is of the form:
    //
-   //       swift://host.example.com/bucket/path/to/my/file
-   //      swhttp://host.example.com/bucket/path/to/my/file
-   //     swhttps://host.example.com/bucket/path/to/my/file
+   //       swift://container/path/to/my/file
    //
    // The recommended way to create an instance of this class is through
    // TFile::Open, for instance:
    //
-   // TFile* f = TFile::Open("swift://host.example.com/bucket/path/to/my/file")
+   //    TFile* f = TFile::Open("swift://container/path/to/my/file");
    //
-   // The protocol used for retrieving the file contents depends on the scheme
-   // used for the file:
+   // The protocol used for retrieving the file contents depends depends on
+   // how the Swift service is configured. It can be either HTTP or HTTPS.
+   // HTTPS is typically used for most installations.
    //
-   //       Scheme               Protocol
-   //       ------               --------
-   //       swift                  https
-   //       swhttps                https
-   //       swhttp                 http
+   // The credentials and identity service URL need to be provided so that
+   // this extension can retrieve the intended file contents. There are two
+   // ways to pass this information: using environment variables or using
+   // the 'options' argument.
    //
-   // The 'options' argument can contain 'NOPROXY' if you want to bypass
-   // the HTTP proxy when retrieving this file's contents. As for any THttpFile-derived
-   // object, the URL of the web proxy can be specified by setting an environmental
-   // variable 'http_proxy'. If this variable is set, we ask that proxy to route our
-   // requests HTTP(S) requests to the file server.
+   // Using environment variables is a simple way to passing authentication
+   // information. Before opening a Swift file, you can set the following
+   // environment variables, for instance:
    //
-   // In addition, you can also use the 'options' argument to provide the user name
-   // and API access key to be used for authentication purposes for this file by using a
-   // string of the form "AUTH=myUserName:myAPIAccessKey". This may be useful to
-   // open several files hosted by different providers in the same program/macro,
-   // where the environemntal variables solution is not convenient (see below).
+   //    OS_AUTH_URL=https://identity.example.com:5000
+   //    OS_TENANT_NAME=tenant
+   //    OS_USERNAME=user
+   //    OS_PASSWORD=AbCdEfG1234567
    //
-   // If you need to specify both NOPROXY and AUTH separate them by ' '
-   // (blank), for instance:
-   // "NOPROXY AUTH=myAccessKey:mySecretKey"
+   // This information is provided to you by your Swift service provider.
    //
-   // Examples:
-   //    TFile* f1 = TFile::Open("swift://host.example.com/bucket/path/to/my/file",
-   //                            "NOPROXY AUTH=myAccessKey:mySecretKey");
-   //    TFile* f2 = TFile::Open("swift://host.example.com/bucket/path/to/my/file",
-   //                            "AUTH=myAccessKey:mySecretKey");
+   // If you need to open files hosted by several different Swift providers you
+   // can specify the authentication information on a per-file basis using
+   // the 'options' argument. For instance:
    //
-   // If there is no authentication information in the 'options' argument
-   // (i.e. not AUTH="....") the values of the environmental variables
-   // SWIFT_API_USER and SWIFT_API_KEY (if set) are expected to contain
-   // the user name and API key, respectively. You have
-   // been provided with these credentials by your Swift service provider.
+   // const char* options = "OS_AUTHURL=https://identity.example.com:5000  OS_TENANT_NAME=tenant OS_USERNAME=user OS_PASSWORD=AbCdEfG1234567";
+   // TFile* f = TFile::Open("swift://container/path/to/my/file", options);
+   //
+   // In addition, the 'options' argument can also contain the word 'NOPROXY' if you
+   // want to bypass the HTTP proxy when retrieving this file's contents. As for
+   // any THttpFile-derived object, the URL of the web proxy can be specified by
+   // setting an environmental variable 'http_proxy'. If this variable is set,
+   // we use that proxy to route our HTTP(S) requests to the file server.
+   //
 
    if (!Initialize(TUrl(url), options)) {
       MakeZombie();
@@ -98,6 +94,9 @@ TSwiftFile::TSwiftFile(const char* url, Option_t* options, const char* ftitle, I
 //_____________________________________________________________________________
 TSwiftFile::~TSwiftFile()
 {
+   if (fIdClient != 0) {
+      delete fIdClient;
+   }
 }
 
 
@@ -105,65 +104,66 @@ TSwiftFile::~TSwiftFile()
 Bool_t TSwiftFile::Initialize(const TUrl& url, Option_t* options)
 {
    // Initialize this Swift file. Extracts bucket name and object key from the
-   // provided URL and parses options looking for the S3 credentials for
-   // opening this file using the S3 protocol.
+   // provided URL and parses options looking for the OpenStack credentials for
+   // opening this file using the Swift REST API.
 
    // Make sure the URL of this Swift file is conformant to what we expect.
    // An accepted Swift path is of the form:
-   //           swift://host[:port]/bucket/path/to/my/file
-   //          swhttp://host[:port]/bucket/path/to/my/file
-   //         swhttps://host[:port]/bucket/path/to/my/file
+   //           swift://bucket/path/to/my/file
 
    TUrl tempUrl(url); // In ROOT v5.24 GetUrl() is not const, so we need a temp URL
    const char* path = tempUrl.GetUrl();
-   TPMERegexp rex("^(swift|swhttps?){1}://([^/]+)/([^/]+)/([^/].*)", "i");
-   if (rex.Match(TString(path)) != 5) {
+   TPMERegexp rex("^(swift://)([^/]+)/([^/].*)$", "i");
+   if (rex.Match(TString(path)) != 4) {
       Error("Initialize", "'%s' is not a valid Swift file identifier", path);
       return kFALSE;
    }
 
    // Save the bucket and object key. Note that we store the object key
    // starting with "/".
-   fBucket = rex[3];
-   fObjectKey = TString::Format("/%s", (const char*)rex[4]);
-
-   // Build URL of this object
-   TString protocol = (rex[1].EndsWith("http", TString::kIgnoreCase)) ? "http"
-                                                                      : "https";
-   TUrl fullUrl(TString::Format("%s://%s/%s%s",
-      protocol.Data(),
-      (const char*)rex[2],   // host[:port]
-      fBucket.Data(),        // bucket
-      fObjectKey.Data())     // object key
-   );
+   fBucket = rex[2];
+   fObjectKey = TString::Format("/%s", (const char*)rex[3]);
 
    // Retrieve the authentication information from 'options' or from the
    // environmental variables
-   const char* kSwiftUserName = "SWIFT_API_USER";
-   const char* kSwiftApiAccessKey = "SWIFT_API_KEY";
-   if (!GetAuthFromOptions(options, fUserName, fApiAccessKey)) {
+   TString authUrl;
+   TString tenantName;
+   TString userName;
+   TString password;
+   if (!GetSwiftCredentialsFromOptions(TString(options), authUrl, tenantName, userName, password)) {
       // There is not auth information in the options. Check in the environment.
-      if (!GetAuthFromEnv(kSwiftUserName, kSwiftApiAccessKey, fUserName, fApiAccessKey)) {
-         // Test alternative environmental variables (for compatibility with
-         // class TS3File)
-         const char* kAccessKeyEnv = "S3_ACCESS_KEY";
-         const char* kSecretKeyEnv = "S3_SECRET_KEY";
-         GetAuthFromEnv(kAccessKeyEnv, kSecretKeyEnv, fUserName, fApiAccessKey);
+      if (!GetSwiftCredentialsFromEnv(authUrl, tenantName, userName, password)) {
+         Error("Initialize", "could not find authentication and credential info in "\
+               "'options' argument nor in environment variables");
+         return kFALSE;
       }
-      // TODO: handle the case when we cannot find Swift auth info in environmental variables
    }
 
-   // Finalize initialization of the super-class
-   if (!THttpFile::Initialize(fullUrl, options)) {
-      // There was an error initializing the super-class. If we have not
-      // authentication info, show an error message as this may be the cause
-      // of the problem (at least for files that do require credentials for
-      // accessing them, i.e. those which are not world-readable)
-      if (fUserName.IsNull() || fApiAccessKey.IsNull()) {
-         Error("Initialize", "could not find authentication info in "\
-               "'options' argument nor in environment variables '%s' and '%s'",
-               kSwiftUserName, kSwiftApiAccessKey);
-      }
+   // Contact the identity service to retrieve the storage URL and the storage
+   // token we must use for retrieving this file's contents
+   fIdClient = new TSwiftIdentityClient(TUrl(authUrl), tenantName, userName, password);
+   if (fIdClient == 0) {
+      Error("Initialize", "could not allocate memory for identity client");
+      return kFALSE;
+   }
+
+   if (!fIdClient->Authenticate()) {
+      Error("Initialize", "could not authenticate to identity service at %s", authUrl.Data());
+      return kFALSE;
+   }
+
+   // Build the file URL and initialize the super-class
+   TString fileUrl = TString(fIdClient->GetStorageUrl().GetUrl()) + GetFilePath();
+
+   if (TCloudExtension::fgDebugLevel > 0) {
+      Info("Initialize", "Authentication succeeded");
+      Info("Initialize", "  Storage URL=%s", fIdClient->GetStorageUrl().GetUrl());
+      Info("Initialize", "Storage Token=%s", fIdClient->GetStorageToken().Data());
+      Info("Initialize", "     File URL=%s", fileUrl.Data());
+   }
+
+   if (!THttpFile::Initialize(fileUrl.Data(), options)) {
+      // There was an error initializing the super-class.
       return kFALSE;
    }
 
@@ -179,26 +179,86 @@ TString TSwiftFile::GetFilePath() const
 
 
 //_____________________________________________________________________________
-TSwiftFile& TSwiftFile::SetUserName(const TString& userName)
-{
-   fUserName = userName;
-   return *this;
-}
-
-
-//_____________________________________________________________________________
-TSwiftFile& TSwiftFile::SetApiAccessKey(const TString& apiAccessKey)
-{
-   fApiAccessKey = apiAccessKey;
-   return *this;
-}
-
-
-//_____________________________________________________________________________
-TSwiftSession* TSwiftFile::MakeSession(const TUrl& fileUrl)
+TSwiftSession* TSwiftFile::MakeSession(const TUrl&)
 {
    // Make a session for sending Swift requests for retrieving this file.
    // Overwrites THttpFile::MakeSession.
 
-   return new TSwiftSession(fileUrl, fUserName, fApiAccessKey);
+   return new TSwiftSession(fIdClient);
 }
+
+
+//_____________________________________________________________________________
+Bool_t TSwiftFile::GetSwiftCredentialsFromEnv(TString& authUrl, TString& tenantName,
+      TString& userName, TString& password)
+{
+   // Retrieve from the environment the Swift credentials and identity service
+   // URL to use for this file.
+
+   authUrl = gSystem->Getenv("OS_AUTH_URL");
+   if (authUrl.IsNull()) {
+      Error("GetSwiftCredentialsFromEnv", "environment variable OS_AUTH_URL not set");
+      return kFALSE;
+   }
+
+   tenantName = gSystem->Getenv("OS_TENANT_NAME");
+   if (tenantName.IsNull()) {
+      Error("GetSwiftCredentialsFromEnv", "environment variable OS_TENANT_NAME not set");
+      return kFALSE;
+   }
+
+   userName = gSystem->Getenv("OS_USERNAME");
+   if (userName.IsNull()) {
+      Error("GetSwiftCredentialsFromEnv", "environment variable OS_USERNAME not set");
+      return kFALSE;
+   }
+
+   password = gSystem->Getenv("OS_PASSWORD");
+   if (password.IsNull()) {
+      Error("GetSwiftCredentialsFromEnv", "environment variable OS_PASSWORD not set");
+      return kFALSE;
+   }
+
+   return kTRUE;
+}
+
+//_____________________________________________________________________________
+Bool_t TSwiftFile::GetSwiftCredentialsFromOptions(const TString& options,
+      TString& authUrl, TString& tenantName,
+      TString& userName, TString& password)
+{
+   // Retrieve the Swift credentials and identity service URL to use for this
+   // file from the options specified at open time
+
+   // The options string is expected to be of the forms:
+   //   OS_AUTHURL=https://host.example.com:8443/auth/v1.0  OS_TENANT_NAME=tenant OS_USERNAME=user OS_PASSWORD=password
+   //   OS_AUTHURL="https://host.example.com:8443/auth/v1.0"  OS_TENANT_NAME="tenant" OS_USERNAME="user" OS_PASSWORD="password"
+   TObjArray* a = options.Tokenize(" ");
+   if (a == 0) {
+      return kFALSE;
+   }
+
+   authUrl = tenantName = userName = password = "";
+   for (int i=0; i < a->GetEntries(); i++) {
+      TObjString* t = (TObjString*)a->UncheckedAt(i);
+      TString token = t->GetString();
+      if (token.BeginsWith("OS_AUTH_URL=")) {
+         authUrl = token.Remove(0, ::strlen("OS_AUTH_URL="));
+         authUrl.Remove(TString::kBoth, '"');
+      } else if (token.BeginsWith("OS_TENANT_NAME=")) {
+         tenantName = token.Remove(0, ::strlen("OS_TENANT_NAME="));
+         tenantName.Remove(TString::kBoth, '"');
+      } else if (token.BeginsWith("OS_USERNAME=")) {
+         userName = token.Remove(0, ::strlen("OS_USERNAME="));
+         userName.Remove(TString::kBoth, '"');
+      } else if (token.BeginsWith("OS_PASSWORD=")) {
+         password = token.Remove(0, ::strlen("OS_PASSWORD="));
+         password.Remove(TString::kBoth, '"');
+      }
+   }
+
+   delete a;
+   return !authUrl.IsNull() && !tenantName.IsNull() &&
+          !userName.IsNull() && !password.IsNull();
+}
+
