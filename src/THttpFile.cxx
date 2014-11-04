@@ -65,7 +65,7 @@ ClassImp(THttpFile)
 
 //_____________________________________________________________________________
 THttpFile::THttpFile(const char* url, Option_t* options, const char* ftitle, Int_t compress)
-          : TFile(url, "WEB", ftitle, compress)
+          : TFile(url, "WEB", ftitle, compress), fHttpSession(0), fSize(0)
 
 {
    // Construct THttpFile object. The 'url' argument is the URL where the file
@@ -158,6 +158,10 @@ Bool_t THttpFile::Initialize(const TUrl& url, Option_t* options)
 
    // Create a HTTP session for retrieving this file
    fHttpSession = MakeSession(fUrl);
+   if (fHttpSession == 0) {
+      Error("Initialize", "cannot create HTTP session with server %s", fUrl.GetUrl());
+      return kFALSE;
+   }
 
    // Make sure libNeon was compiled with support for SSL, so we can use SSL
    // for this session
@@ -169,12 +173,14 @@ Bool_t THttpFile::Initialize(const TUrl& url, Option_t* options)
    // Inititalize the HTTP proxy for this file, unless the user explicitely
    // requested not to do so
    TString optStr(options);
-   if (!optStr.Contains("NOPROXY", TString::kIgnoreCase))
+   if (!optStr.Contains("NOPROXY", TString::kIgnoreCase)) {
       SetSessionProxy();
+   }
 
    // Send a HTTP HEAD request to retrieve the size of the file
-   if (!RetrieveFileSize())
+   if (!RetrieveFileSize()) {
       return kFALSE;
+   }
 
    // Initialize the offset of this file
    SetOffset(0);
@@ -242,8 +248,9 @@ Bool_t THttpFile::RetrieveFileSize()
    // Save this file size
    fSize = size;
 
-   if (TCloudExtension::fgDebugLevel > 0)
+   if (TCloudExtension::fgDebugLevel > 0) {
       Info("RetrieveFileSize", "file size is %lld", fSize);
+   }
 
    // We are done
    delete request;
@@ -590,13 +597,23 @@ Bool_t THttpFile::GetAuthFromOptions(Option_t* options, TString& accessKey, TStr
 
 
 //_____________________________________________________________________________
-Bool_t THttpFile::GetAuthFromEnv(const char* accessKeyEnv, const char* secretKeyEnv,
-                                 TString& outAccessKey, TString& outSecretKey)
+Bool_t THttpFile::GetAuthFromEnv(
+      const char* authUrlEnv,
+      const char* accessKeyEnv,
+      const char* secretKeyEnv,
+      TString& outAuthUrl,
+      TString& outAccessKey,
+      TString& outSecretKey)
 {
-   // Sets both the access and secret keys from the environmental variables, if
-   // they are both set.
+   // Sets the authentication URL (if any), the access and secret keys
+   // from the environmental variables, if they are both set.
 
-   // Check that both environmental variables are set
+   // Check that the environmental variables for user and secret key are
+   // both set. Auth URL is not mandatory as some cloud storage services
+   // such as Amazon S3 does not have a specific one. Swift does.
+   if (authUrlEnv != 0) {
+      outAuthUrl = gSystem->Getenv(authUrlEnv);
+   }
    TString accessKey = gSystem->Getenv(accessKeyEnv);
    TString secretKey = gSystem->Getenv(secretKeyEnv);
    if (accessKey.IsNull() || secretKey.IsNull()) {

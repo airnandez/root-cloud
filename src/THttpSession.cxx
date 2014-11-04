@@ -160,8 +160,9 @@ void THttpSession::SetServerUrl(const TUrl& url)
    ne_set_connect_timeout(fRawSession, 5); // in seconds TODO: is that enough?
 
    // Set the callback for verifying the server certificate
-   if (strcmp(scheme, "https") == 0)
+   if (strcmp(scheme, "https") == 0) {
       ne_ssl_set_verify(fRawSession, VerifyServerCertCallback, 0);
+   }
 }
 
 

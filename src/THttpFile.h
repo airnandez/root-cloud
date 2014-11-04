@@ -84,8 +84,13 @@ protected:
 
    // Helpers (to be used by subclasses)
    Bool_t GetAuthFromOptions(Option_t* options, TString& accessKey, TString& secretKey);
-   Bool_t GetAuthFromEnv(const char* accessKeyEnv, const char* secretKeyEnv,
-                         TString& outAccessKey, TString& outSecretKey);
+   Bool_t GetAuthFromEnv(
+      const char* authUrlEnv,
+      const char* accessKeyEnv,
+      const char* secretKeyEnv,
+      TString& outAuthUrl,
+      TString& outAccessKey,
+      TString& outSecretKey);
 
    // Modifiers
    virtual THttpSession*  MakeSession(const TUrl& fileUrl);

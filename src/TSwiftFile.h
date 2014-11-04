@@ -31,6 +31,10 @@
 #include "THttpFile.h"
 #endif
 
+#ifndef ROOT_TSwiftIdentityClient
+#include "TSwiftIdentityClient.h"
+#endif
+
 #ifndef ROOT_TSwiftSession
 #include "TSwiftSession.h"
 #endif
@@ -40,13 +44,19 @@ class TSwiftFile: public THttpFile {
 
 private:
    // Data members
-   TString      fUserName;        // Access key id
-   TString      fApiAccessKey;    // Secret key id
-   TString      fBucket;          // Bucket name
-   TString      fObjectKey;       // File object key (within the bucket)
+   TString               fBucket;      // Bucket name
+   TString               fObjectKey;   // File object key (within the bucket)
+   TSwiftIdentityClient* fIdClient;    // Swift identity client
 
    // Disallow the default constructor
    TSwiftFile();
+
+   // Helpers
+   Bool_t GetSwiftCredentialsFromEnv(TString& authUrl, TString& tenantName,
+      TString& userName, TString& password);
+   Bool_t GetSwiftCredentialsFromOptions(const TString& options,
+      TString& authUrl, TString& tenantName,
+      TString& userName, TString& password);
 
 protected:
    virtual TSwiftSession*  MakeSession(const TUrl& fileUrl);
@@ -58,15 +68,9 @@ public:
    virtual ~TSwiftFile();
 
    // Selectors
-   const TString&  GetUserName() const { return fUserName; }
-   const TString&  GetApiAccessKey() const { return fApiAccessKey; }
    const TString&  GetBucket() const { return fBucket; }
    const TString&  GetObjectKey() const { return fObjectKey; }
    TString         GetFilePath() const;
-
-   // Modifiers
-   TSwiftFile& SetUserName(const TString& userName);
-   TSwiftFile& SetApiAccessKey(const TString& apiAccessKey);
 
    ClassDef(TSwiftFile, 0)  // Read a ROOT file from a OpenStack Swift server
 };

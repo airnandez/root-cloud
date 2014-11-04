@@ -20,7 +20,7 @@
 //                                                                      //
 // TS3File                                                              //
 //                                                                      //
-// A TS3File is a THttpFile which retrieves the file contents from a    //
+// A TS3Fileis a THttpFile which retrieves the file contents from a     //
 // web server implementing the REST API of the Amazon S3 protocol. This //
 // class is meant to be as generic as possible to be used with files    //
 // hosted not only by Amazon S3 servers but also by other providers     //
@@ -38,8 +38,9 @@
 // in order to access each S3 file. They are provided to you by your S3 //
 // service provider. Those two keys can be provided to ROOT when        //
 // initializing an object of this class by two means:                   //
-// a) by using the environmental variables S3_ACCESS_KEY and            //
-//    S3_SECRET_KEY, or                                                 //
+//                                                                      //
+// a) by setting the environmental variables S3_ACCESS_KEY and          //
+//    S3_SECRET_KEY to the appropriate values, or                       //
 // b) by specifying them as an argument when opening each file.         //
 //                                                                      //
 // The first method is convenient if all the S3 files you want to       //
@@ -58,7 +59,6 @@
 // "Amazon Simple Storage Service REST API Reference"                   //
 //  http://docs.amazonwebservices.com/AmazonS3/latest/API/APIRest.html  //
 //////////////////////////////////////////////////////////////////////////
-
 
 #ifndef ROOT_THttpFile
 #include "THttpFile.h"
@@ -82,6 +82,11 @@ private:
 
    // Avoid compiler generation of default constructor
    TS3File();
+
+   // Helpers
+   Bool_t GetCredentialsFromEnv(TString& accessKey, TString& secretKey);
+   Bool_t GetCredentialsFromOptions(const TString& options, TString& accessKey, TString& secretKey);
+
 
 protected:
    virtual TS3Session*  MakeSession(const TUrl& fileUrl);

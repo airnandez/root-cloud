@@ -9,6 +9,7 @@
 #pragma link C++ class TS3Request+;
 #pragma link C++ class TS3File+;
 #pragma link C++ class TS3FilePlugin+;
+#pragma link C++ class TSwiftIdentityClient+;
 #pragma link C++ class TSwiftSession+;
 #pragma link C++ class TSwiftFile+;
 #pragma link C++ class TCloudExtension+;
