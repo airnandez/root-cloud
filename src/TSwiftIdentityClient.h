@@ -81,8 +81,8 @@ public:
    const TString&  GetTenantName() const { return fTenantName; }
    const TString&  GetUserName() const { return fUserName; }
    const TString&  GetPassword() const { return fPassword; }
-   const TUrl&     GetAuthUrl() const { return fAuthUrl; }
-   const TUrl&     GetStorageUrl() const { return fStorageUrl; }
+   TUrl            GetAuthUrl() const { return fAuthUrl; }
+   TUrl            GetStorageUrl() const { return fStorageUrl; }
    const TString&  GetStorageToken() const { return fStorageToken; }
    Bool_t          IsAuthenticated() const;
    TString         GetExpirationDateStr() const;
