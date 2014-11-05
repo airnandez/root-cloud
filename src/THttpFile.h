@@ -82,16 +82,6 @@ protected:
    Long64_t       fSize;            // File size in bytes
    static TUrl    fgProxyUrl;       // Globally set proxy URL
 
-   // Helpers (to be used by subclasses)
-   Bool_t GetAuthFromOptions(Option_t* options, TString& accessKey, TString& secretKey);
-   Bool_t GetAuthFromEnv(
-      const char* authUrlEnv,
-      const char* accessKeyEnv,
-      const char* secretKeyEnv,
-      TString& outAuthUrl,
-      TString& outAccessKey,
-      TString& outSecretKey);
-
    // Modifiers
    virtual THttpSession*  MakeSession(const TUrl& fileUrl);
    Bool_t                 Initialize(const TUrl& url, Option_t* options);
