@@ -31,11 +31,11 @@ $ ./configure --with-ssl --prefix=$HOME/libNeon
 Once ROOT and libNeon are installed in your system, you can download and install this extension by following the steps below.
 
 * Go to the directory where ROOT is installed in your system (say `$HOME/ROOT`) and activate that version of ROOT. As a consequence, some environmental variables will be modified (such as `PATH` and `LD_LIBRARY_PATH`) and in particular `$ROOTSYS` will point to the location of your preferred ROOT installation:
-    
+
 ```bash
 $ source $HOME/ROOT/bin/thisroot.sh    # or source $HOME/ROOT/bin/thisroot.csh if you are using tcsh
 ```
-    
+
 * Download the sources of this extension by cloning this Git repository into the local directory of your choice, say `$HOME/root-cloud`:
 
 ```bash
@@ -58,7 +58,7 @@ $ make
 
 
 ### Installing the extension
-    
+
 At this stage you have compiled the extension. Now you have the choice to install it either within the ROOT installation under `$ROOTSYS` or under your `$HOME` for a private use (or in case you are using a shared installation of ROOT that you don't want or you cannot modify).
 
 For installing under `$ROOTSYS`, do
@@ -68,9 +68,9 @@ $ cd $HOME/root-cloud/src && make install
 ```
 
 These commands install the relevant components of this extension under `$ROOTSYS` as follows:
- 
+
 * the shared object library is copied to `$ROOTSYS/lib/libRootCloudStorage.so`
-* the `TFile` plugin is copied to `$ROOTSYS/etc/plugins/TFile/P160_CloudStorage.C` 
+* the `TFile` plugin is copied to `$ROOTSYS/etc/plugins/TFile/P160_CloudStorage.C`
 
 If instead, you prefer to install this extension under your `$HOME`, do:
 ```bash
@@ -88,12 +88,11 @@ $ cd $HOME/.root && tree
         `-- P160_CloudStorage.C
 ```
 
+To tell ROOT to look for plugins and shared libraries under your `$HOME/.root` directory, add the following lines to your `$HOME/.rootrc` file:
 
-To tell ROOT to look for plugins and shared libraries under your `$HOME/.root`, add the following lines to your `$HOME/.rootrc` file:
-
-```bash
-Unix.*.Root.DynamicPath: .:/$(HOME)/.root/lib:$(ROOTSYS)/lib:
-Unix.*.Root.PluginPath:  .:/$(HOME)/.root/plugins:$(ROOTSYS)/etc/plugins:
+```
+Unix.*.Root.DynamicPath: .:$(HOME)/.root/lib:$(ROOTSYS)/lib:
+Unix.*.Root.PluginPath:  .:$(HOME)/.root/plugins:$(ROOTSYS)/etc/plugins:
 ```
 
 Now you are ready to use this extension.
