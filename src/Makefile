@@ -164,7 +164,7 @@ install: $(CLOUDSTOR_SHOBJ)
 
 
 uninstall:
-	rm -f $(ROOT_ETCDIR)/TFile/P160_CloudStorage.C
+	rm -f $(ROOT_ETCDIR)/plugins/TFile/P160_CloudStorage.C
 	rm -f $(ROOT_LIBDIR)/$(CLOUDSTOR_SHOBJ)
 
 
