@@ -8,7 +8,7 @@ See **How to Use** section provide details on what file naming schemes are suppo
 
 ### Supported versions of ROOT
 
-We have tested this extension with several versions of ROOT since v5.24/00 (released on October 2009) up to version 5.34/21. ROOT versions prior to v5.24.00 may work as well but we have not tested.
+We have tested this extension with several versions of ROOT since v5.24/00 (released on October 2009) up to version 5.34/23. ROOT versions prior to v5.24.00 may work as well but we have not tested. This extension also works with ROOT v6 master.
 
 ### Supported cloud storage service providers
 The service providers we tested this extension against are:
