@@ -17,11 +17,6 @@ endif
 ROOT_LIBDIR := $(shell $(ROOT_CONFIG) --libdir)
 ROOT_ETCDIR := $(shell $(ROOT_CONFIG) --etcdir)
 
-# ROOTCINT is not necessarily defined for ROOT >= v6, so assume it is CLING
-ifeq ($(ROOTCINT),)
-ROOTCINT := rootcling
-endif
-
 #
 # If no general Makefile for this architecture is located in $ROOTSYS/etc
 # include the one shipped with the $ROOTSYS/test directory
@@ -87,10 +82,11 @@ CLOUDSTOR_SRC   =  THttpFile.$(SrcSuf) \
 
 CLOUDSTOR_OBJ = $(CLOUDSTOR_SRC:%.$(SrcSuf)=%.$(ObjSuf))
 
-CLOUDSTOR_SHOBJ = libRootCloudStorage.$(DllSuf)
+CLOUDSTOR_BASE  = libRootCloudStorage
+CLOUDSTOR_SHOBJ = $(CLOUDSTOR_BASE).$(DllSuf)
 
 ifeq ($(PLATFORM),win32)
-CLOUDSTOR_LIB = libRootCloudStorage.lib
+CLOUDSTOR_LIB = $(CLOUDSTOR_BASE).lib
 else
 CLOUDSTOR_LIB = $(shell pwd)/$(CLOUDSTOR_SHOBJ)
 endif
@@ -120,7 +116,12 @@ all:  $(OBJS) $(SHOBS)
 
 AllDict.$(SrcSuf): $(CLOUDSTOR_INC) LinkDef.h
 	@echo "Generating dictionary $@..."
-	$(ROOTCINT) -v4 -f $@ -c -I$(NEON_INC) $^
+ifeq ($(ROOTCINT),)
+	rootcling -f $@ -c -I$(NEON_INC) -s $(CLOUDSTOR_SHOBJ) $^
+else
+	rootcint -f $@ -c -I$(NEON_INC) $^
+endif
+
 
 $(CLOUDSTOR_SRC): $(CLOUDSTOR_INC)
 
@@ -152,7 +153,7 @@ endif
 
 
 clean:
-	@rm -f $(OBJS) core *Dict.* *.so *.dll AllDict.*
+	@rm -f $(OBJS) core *Dict.* *.so *.dll AllDict*.* *.pcm
 
 
 buildall: clean all
@@ -160,21 +161,20 @@ buildall: clean all
 
 install: $(CLOUDSTOR_SHOBJ)
 	cp ../plugins/P160_CloudStorage.C $(ROOT_ETCDIR)/plugins/TFile
-	cp $(CLOUDSTOR_SHOBJ) $(ROOT_LIBDIR)
+	cp $(wildcard $(CLOUDSTOR_BASE)*.so $(CLOUDSTOR_BASE)*.pcm) $(ROOT_LIBDIR)
 
 
 uninstall:
 	rm -f $(ROOT_ETCDIR)/plugins/TFile/P160_CloudStorage.C
-	rm -f $(ROOT_LIBDIR)/$(CLOUDSTOR_SHOBJ)
+	rm -f $(ROOT_LIBDIR)/$(CLOUDSTOR_BASE)*.{so,pcm}
 
 
 installhome: $(CLOUDSTOR_SHOBJ) uninstallhome
 	mkdir -p $(HOME_INSTALL_DIR)/lib $(HOME_INSTALL_DIR)/plugins/TFile
-	cp $(CLOUDSTOR_SHOBJ) $(HOME_INSTALL_DIR)/lib
+	cp $(wildcard $(CLOUDSTOR_BASE)*.so $(CLOUDSTOR_BASE)*.pcm) $(HOME_INSTALL_DIR)/lib
 	cp ../plugins/P160_CloudStorage.C $(HOME_INSTALL_DIR)/plugins/TFile
 
 
 uninstallhome:
-	rm -f $(HOME_INSTALL_DIR)/lib/$(CLOUDSTOR_SHOBJ)
+	rm -f $(HOME_INSTALL_DIR)/lib/$(CLOUDSTOR_BASE)*.{so,pcm}
 	rm -f $(HOME_INSTALL_DIR)/plugins/TFile/P160_CloudStorage.C
-

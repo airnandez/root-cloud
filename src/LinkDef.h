@@ -1,4 +1,4 @@
-#ifdef __CINT__
+#if defined(__CINT__) || defined(__CLING__)
 #pragma link C++ class THttpFile+;
 #pragma link C++ class THttpFilePlugin+;
 #pragma link C++ class THttpSession+;
