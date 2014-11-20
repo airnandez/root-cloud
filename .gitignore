@@ -3,5 +3,6 @@ AllDict.*
 *.o
 *.so
 *.root
+*.pcm
 settings.sh
 utils/
