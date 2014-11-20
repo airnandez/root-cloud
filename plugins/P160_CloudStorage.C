@@ -67,12 +67,8 @@ void P160_CloudStorage()
       gPluginMgr->AddHandler("TFile", "^gshttps:", "TS3File", "RootCloudStorage",
          "TS3File(const char*,Option_t*,const char*,Int_t)");
 
-      // OpenStack Swift
+      // Swift protocol: OpenStack Swift and Rackspace
       gPluginMgr->AddHandler("TFile", "^swift:", "TSwiftFile", "RootCloudStorage",
-         "TSwiftFile(const char*,Option_t*,const char*,Int_t)");
-      gPluginMgr->AddHandler("TFile", "^swhttps:", "TSwiftFile", "RootCloudStorage",
-         "TSwiftFile(const char*,Option_t*,const char*,Int_t)");
-      gPluginMgr->AddHandler("TFile", "^swhttp:", "TSwiftFile", "RootCloudStorage",
          "TSwiftFile(const char*,Option_t*,const char*,Int_t)");
    }
    else if (gROOT->GetVersionInt() < 53403) {
@@ -105,12 +101,8 @@ void P160_CloudStorage()
       gPluginMgr->AddHandler("TFile", "^gshttps:", "TS3File", "RootCloudStorage",
          "TS3File(const char*,Option_t*,const char*,Int_t)");
 
-      // OpenStack Swift
+      // Swift protocol: OpenStack Swift and Rackspace
       gPluginMgr->AddHandler("TFile", "^swift:", "TSwiftFile", "RootCloudStorage",
-         "TSwiftFile(const char*,Option_t*,const char*,Int_t)");
-      gPluginMgr->AddHandler("TFile", "^swhttps:", "TSwiftFile", "RootCloudStorage",
-         "TSwiftFile(const char*,Option_t*,const char*,Int_t)");
-      gPluginMgr->AddHandler("TFile", "^swhttp:", "TSwiftFile", "RootCloudStorage",
          "TSwiftFile(const char*,Option_t*,const char*,Int_t)");
    }
    else {
@@ -146,12 +138,8 @@ void P160_CloudStorage()
       gPluginMgr->AddHandler("TFile", "^gshttp:", "TS3FilePlugin", "RootCloudStorage",
          "TS3FilePlugin(const char*,Option_t*)");
 
-      // OpenStack Swift
+      // Swift protocol: OpenStack Swift and Rackspace
       gPluginMgr->AddHandler("TFile", "^swift:", "TSwiftFile", "RootCloudStorage",
          "TSwiftFile(const char*,Option_t*,const char*,Int_t)");
-      gPluginMgr->AddHandler("TFile", "^swhttps:", "TSwiftFile", "RootCloudStorage",
-         "TSwiftFile(const char*,Option_t*,const char*,Int_t)");
-      gPluginMgr->AddHandler("TFile", "^swhttp:", "TSwiftFile", "RootCloudStorage",
-         "TSwiftFile(const char*,Option_t*,const char*,Int_t)");
-   }
+    }
 }
